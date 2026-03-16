@@ -14,16 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assignments: {
+        Row: {
+          assigned_at: string
+          complaint_id: string
+          employee_id: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          complaint_id: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          complaint_id?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      complaints: {
+        Row: {
+          address: string | null
+          category: Database["public"]["Enums"]["garbage_category"]
+          completion_image_url: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          latitude: number
+          longitude: number
+          status: Database["public"]["Enums"]["complaint_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["garbage_category"]
+          completion_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          latitude: number
+          longitude: number
+          status?: Database["public"]["Enums"]["complaint_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["garbage_category"]
+          completion_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          latitude?: number
+          longitude?: number
+          status?: Database["public"]["Enums"]["complaint_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          comment: string | null
+          complaint_id: string
+          created_at: string
+          id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          complaint_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          complaint_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: true
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "citizen" | "admin" | "employee"
+      complaint_status:
+        | "pending"
+        | "assigned"
+        | "in_progress"
+        | "completed"
+        | "rejected"
+      garbage_category:
+        | "household"
+        | "construction"
+        | "hazardous"
+        | "electronic"
+        | "organic"
+        | "recyclable"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["citizen", "admin", "employee"],
+      complaint_status: [
+        "pending",
+        "assigned",
+        "in_progress",
+        "completed",
+        "rejected",
+      ],
+      garbage_category: [
+        "household",
+        "construction",
+        "hazardous",
+        "electronic",
+        "organic",
+        "recyclable",
+        "other",
+      ],
+    },
   },
 } as const
