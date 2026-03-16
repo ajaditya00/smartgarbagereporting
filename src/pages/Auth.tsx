@@ -4,7 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Recycle, Leaf, MapPin } from "lucide-react";
 
@@ -14,6 +20,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,126 +28,157 @@ export default function Auth() {
     setLoading(true);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (error) {
         toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      const user = data.user;
+
+      // Get user role from database
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user?.id)
+        .single();
+
+      if (roleError) {
+        toast.error("Unable to fetch user role");
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Logged in successfully!");
+
+      if (roleData.role === "admin") {
+        navigate("/admin");
+      } else if (roleData.role === "employee") {
+        navigate("/employee");
       } else {
-        toast.success("Logged in successfully!");
-        navigate("/");
+        navigate("/citizen");
       }
     } else {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } },
+        options: {
+          data: { full_name: fullName },
+        },
       });
+
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created! Please check your email to verify.");
+        toast.success("Account created! Please verify your email.");
       }
     }
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel - Branding */}
+      {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col justify-center items-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-primary-foreground blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-primary-foreground blur-3xl" />
-        </div>
-        <div className="relative z-10 text-center space-y-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Recycle className="h-14 w-14 text-primary-foreground" />
-          </div>
-          <h1 className="text-4xl font-heading font-bold text-primary-foreground">
-            CleanCity
-          </h1>
-          <p className="text-xl text-primary-foreground/80 max-w-md">
+        <div className="relative text-center space-y-8">
+          <Recycle className="h-14 w-14 text-white mx-auto" />
+          <h1 className="text-4xl font-bold text-white">CleanCity</h1>
+
+          <p className="text-white/80">
             Smart Garbage Reporting & Management System
           </p>
-          <div className="flex flex-col gap-4 mt-12 text-primary-foreground/70">
-            <div className="flex items-center gap-3">
+
+          <div className="space-y-4 text-white/80 mt-8">
+            <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              <span>Report garbage with GPS location</span>
+              Report garbage with GPS
             </div>
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-2">
               <Leaf className="h-5 w-5" />
-              <span>Track cleanup progress in real-time</span>
+              Track cleanup progress
             </div>
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-2">
               <Recycle className="h-5 w-5" />
-              <span>Keep your city clean and green</span>
+              Keep your city clean
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Panel - Form */}
+      {/* Right Panel */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
-        <Card className="w-full max-w-md border-border shadow-xl animate-fade-in">
-          <CardHeader className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 lg:hidden mb-2">
-              <Recycle className="h-8 w-8 text-primary" />
-              <span className="text-xl font-heading font-bold text-foreground">CleanCity</span>
-            </div>
-            <CardTitle className="text-2xl font-heading">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">
               {isLogin ? "Welcome back" : "Create account"}
             </CardTitle>
+
             <CardDescription>
-              {isLogin ? "Sign in to your account" : "Join the clean city movement"}
+              {isLogin
+                ? "Sign in to your account"
+                : "Join the clean city movement"}
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                <div>
+                  <Label>Full Name</Label>
                   <Input
-                    id="fullName"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="John Doe"
-                    required={!isLogin}
+                    required
                   />
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+
+              <div>
+                <Label>Email</Label>
                 <Input
-                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+
+              <div>
+                <Label>Password</Label>
                 <Input
-                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
                   minLength={6}
+                  required
                 />
               </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+                {loading
+                  ? "Please wait..."
+                  : isLogin
+                  ? "Sign In"
+                  : "Create Account"}
               </Button>
             </form>
+
             <div className="mt-6 text-center">
               <button
-                type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-muted-foreground hover:text-primary"
               >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                {isLogin
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"}
               </button>
             </div>
           </CardContent>

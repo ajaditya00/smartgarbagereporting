@@ -32,7 +32,7 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode;
   const { user, roles, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (requiredRole && !roles.includes(requiredRole as any)) return <Navigate to="/" replace />;
+  if (requiredRole && !roles.includes(requiredRole as Database["public"]["Enums"]["app_role"])) return <Navigate to="/" replace />;
   return <DashboardLayout>{children}</DashboardLayout>;
 }
 

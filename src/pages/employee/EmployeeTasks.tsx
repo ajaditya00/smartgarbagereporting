@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import { Camera, CheckCircle } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Database } from "@/integrations/supabase/types";
 
 type AssignmentWithComplaint = Tables<"assignments"> & { complaint: Tables<"complaints"> };
 
@@ -16,7 +16,7 @@ export default function EmployeeTasks() {
   const [tasks, setTasks] = useState<AssignmentWithComplaint[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("assignments")
@@ -24,20 +24,20 @@ export default function EmployeeTasks() {
       .eq("employee_id", user.id)
       .order("assigned_at", { ascending: false });
 
-    const mapped = (data || []).map((a: any) => ({
+    const mapped = (data || []).map((a) => ({
       ...a,
       complaint: a.complaints,
     }));
     setTasks(mapped);
     setLoading(false);
-  };
+  }, [user]);
 
-  useEffect(() => { fetchTasks(); }, [user]);
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const updateStatus = async (complaintId: string, status: string) => {
     const { error } = await supabase
       .from("complaints")
-      .update({ status: status as any })
+      .update({ status: status as Database["public"]["Enums"]["complaint_status"] })
       .eq("id", complaintId);
     if (error) {
       toast.error("Update failed: " + error.message);

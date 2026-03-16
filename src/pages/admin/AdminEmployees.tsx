@@ -5,35 +5,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { UserPlus, UserCheck } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 export default function AdminEmployees() {
   const [employees, setEmployees] = useState<Tables<"profiles">[]>([]);
+  const [citizens, setCitizens] = useState<Tables<"profiles">[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newEmail, setNewEmail] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [adding, setAdding] = useState(false);
 
-  const fetchEmployees = async () => {
-    const { data: roleData } = await supabase.from("user_roles").select("user_id").eq("role", "employee");
-    if (roleData && roleData.length > 0) {
-      const ids = roleData.map((r) => r.user_id);
-      const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", ids);
-      setEmployees(profiles || []);
-    } else {
-      setEmployees([]);
-    }
+  const fetchData = async () => {
+    const [empRoleData, citRoleData] = await Promise.all([
+      supabase.from("user_roles").select("user_id").eq("role", "employee"),
+      supabase.from("user_roles").select("user_id").eq("role", "citizen"),
+    ]);
+
+    const empIds = empRoleData.data?.map(r => r.user_id) || [];
+    const citIds = citRoleData.data?.map(r => r.user_id) || [];
+
+    const [empProfiles, citProfiles] = await Promise.all([
+      empIds.length > 0 ? supabase.from("profiles").select("*").in("user_id", empIds) : Promise.resolve({ data: [] }),
+      citIds.length > 0 ? supabase.from("profiles").select("*").in("user_id", citIds) : Promise.resolve({ data: [] }),
+    ]);
+
+    setEmployees(empProfiles.data || []);
+    setCitizens(citProfiles.data || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  // Note: In production, you'd create the employee via an edge function
-  // For now, admin can promote existing users by their email
-  const addEmployee = async () => {
-    toast.info("To add employees, create their accounts first, then use the database to assign the 'employee' role.");
-    setAddOpen(false);
+  const promoteToEmployee = async (userId: string) => {
+    setAdding(true);
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: userId,
+      role: "employee",
+    });
+    if (error) {
+      toast.error("Failed to promote user: " + error.message);
+    } else {
+      toast.success("User promoted to employee!");
+      fetchData();
+    }
+    setAdding(false);
   };
 
   return (
@@ -48,13 +63,28 @@ export default function AdminEmployees() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Employee</DialogTitle>
+              <DialogTitle>Promote Citizen to Employee</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                To add an employee, first have them register as a citizen, then assign the employee role via the Cloud database.
-              </p>
-              <Button onClick={addEmployee} className="w-full">Got it</Button>
+            <div className="space-y-3">
+              {citizens.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No citizens available to promote.</p>
+              ) : (
+                citizens.map((cit) => (
+                  <div key={cit.user_id} className="flex items-center justify-between p-3 border rounded">
+                    <div>
+                      <p className="font-medium">{cit.full_name || "Unnamed"}</p>
+                      <p className="text-xs text-muted-foreground">{cit.phone || "No phone"}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => promoteToEmployee(cit.user_id)}
+                      disabled={adding}
+                    >
+                      <UserCheck className="h-3 w-3 mr-1" /> Promote
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -65,7 +95,7 @@ export default function AdminEmployees() {
       ) : employees.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            No employees found. Add the employee role to users via the Cloud database.
+            No employees found. Promote citizens to employees.
           </CardContent>
         </Card>
       ) : (

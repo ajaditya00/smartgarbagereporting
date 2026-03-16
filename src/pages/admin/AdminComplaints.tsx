@@ -60,7 +60,7 @@ export default function AdminComplaints() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("complaints").update({ status: status as any }).eq("id", id);
+    const { error } = await supabase.from("complaints").update({ status: status as Database["public"]["Enums"]["complaint_status"] }).eq("id", id);
     if (error) toast.error("Update failed");
     else { toast.success("Status updated"); fetchData(); }
   };
