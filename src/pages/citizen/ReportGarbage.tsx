@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Camera, MapPin, Upload } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
 import { Constants } from "@/integrations/supabase/types";
 
 const categories = Constants.public.Enums.garbage_category;
@@ -87,7 +88,7 @@ export default function ReportGarbage() {
       latitude: coords.lat,
       longitude: coords.lng,
       address,
-      category: category as any,
+      category: category as Database["public"]["Enums"]["garbage_category"],
       description,
     });
 

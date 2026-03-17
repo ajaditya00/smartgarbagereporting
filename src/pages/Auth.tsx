@@ -41,27 +41,36 @@ export default function Auth() {
 
       const user = data.user;
 
-      // Get user role from database
-      const { data: roleData, error: roleError } = await supabase
+      // Get user roles from database
+      const { data: rolesData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user?.id)
-        .single();
+        .eq("user_id", user?.id);
 
       if (roleError) {
-        toast.error("Unable to fetch user role");
+        toast.error("Unable to fetch user role: " + roleError.message);
         setLoading(false);
         return;
       }
 
+      if (!rolesData || rolesData.length === 0) {
+        toast.error("No roles assigned. Please check user_roles in database.");
+        setLoading(false);
+        return;
+      }
+
+      const roleList = rolesData.map((r) => r.role);
+      const hasAdmin = roleList.includes("admin");
+      const hasEmployee = roleList.includes("employee");
+
       toast.success("Logged in successfully!");
 
-      if (roleData.role === "admin") {
+      if (hasAdmin) {
         navigate("/admin");
-      } else if (roleData.role === "employee") {
+      } else if (hasEmployee) {
         navigate("/employee");
       } else {
-        navigate("/citizen");
+        navigate("/");
       }
     } else {
       const { error } = await supabase.auth.signUp({

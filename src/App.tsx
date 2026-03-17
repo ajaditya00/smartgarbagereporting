@@ -25,14 +25,17 @@ import EmployeeTasks from "./pages/employee/EmployeeTasks";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: string }) {
+type AppRole = Database["public"]["Enums"]["app_role"];
+
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode; requiredRole?: AppRole }) {
   const { user, roles, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
   if (!user) return <Navigate to="/auth" replace />;
-  if (requiredRole && !roles.includes(requiredRole as Database["public"]["Enums"]["app_role"])) return <Navigate to="/" replace />;
+  if (requiredRole && !roles.includes(requiredRole)) return <Navigate to="/" replace />;
   return <DashboardLayout>{children}</DashboardLayout>;
 }
 

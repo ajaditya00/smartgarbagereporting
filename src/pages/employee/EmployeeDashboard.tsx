@@ -17,7 +17,7 @@ export default function EmployeeDashboard() {
       .select("*, complaints(*)")
       .eq("employee_id", user.id)
       .then(({ data }) => {
-        const mapped = (data || []).map((a: any) => ({
+        const mapped = (data || []).map((a: Tables<"assignments"> & { complaints?: Tables<"complaints"> }) => ({
           ...a,
           complaint: a.complaints,
         }));

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import { UserPlus, Filter } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, Database } from "@/integrations/supabase/types";
 import { Constants } from "@/integrations/supabase/types";
 
 type Complaint = Tables<"complaints">;
